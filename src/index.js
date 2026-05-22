@@ -30,6 +30,20 @@ app.use(express.urlencoded({ extended: true }))
 const uploadDir = process.env.UPLOAD_DIR || (isVercel ? '/tmp/uploads' : 'uploads')
 app.use('/uploads', express.static(path.isAbsolute(uploadDir) ? uploadDir : path.join(process.cwd(), uploadDir)))
 
+// ─── Conexión DB por request (Vercel serverless) ──────────────────────────────
+// En local la conexión se hace una vez al arrancar; en Vercel cada función
+// puede ser una instancia nueva, así que garantizamos la conexión aquí.
+if (isVercel) {
+  app.use(async (req, res, next) => {
+    try {
+      await connectDB()
+      next()
+    } catch (err) {
+      res.status(500).json({ message: 'Error de conexión a la base de datos' })
+    }
+  })
+}
+
 // ─── Rutas API ─────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
@@ -49,8 +63,6 @@ app.use((err, _req, res, _next) => {
 
 // ─── Arranque ──────────────────────────────────────────────────────────────────
 if (isVercel) {
-  // Vercel: conectar DB y exportar app (sin Socket.io — no soportado en serverless)
-  connectDB().catch((err) => console.error('MongoDB error:', err.message))
   module.exports = app
 } else {
   // Local: servidor HTTP completo con Socket.io para el chat en tiempo real
