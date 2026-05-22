@@ -11,6 +11,7 @@
     "lint:fix": "eslint src/**/*.js --fix"
   },
   "dependencies": {
+    "@vercel/blob": "^0.27.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
